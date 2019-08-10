@@ -1,7 +1,9 @@
 package com.sample.notificationcenter;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -587,4 +589,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return super.onKeyDown(keyCode, event);
         }
     }
+
+
+    //开机广播
+
 }
