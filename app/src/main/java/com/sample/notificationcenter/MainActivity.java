@@ -26,9 +26,9 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
         MessageAdapter.OnItemClickListener {
 
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerView;//
 
-    private List<MessageBean> list;
+    private List<MessageBean> list;//数据源
     private MessageAdapter adapter;
 
     private int position;
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //区分是不是删除确认界面
     private boolean confirm;
 
-    private List<Integer> selectedPosition = new ArrayList<>();
+    private List<Integer> selectedPosition = new ArrayList<>();//选中的位置集合
 
     private int unread;
 
@@ -158,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         updateUnRead();
     }
 
+    //更改未读消息数量
     private void updateUnRead() {
         unread = 0;
         for (int i = 0; i < list.size(); i++) {
@@ -165,7 +166,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 unread ++;
             }
         }
-
         if (unread == 0) {
             tvUnread.setVisibility(View.GONE);
         } else {
@@ -195,9 +195,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void buttonConfirm(int id) {
         if (!confirm) {
+            //不是删除页面，只需要显示信息内容
             int type = list.get(position).getType();
             showToast(id, type);
         } else {
+            //需要显示删除页面
             confirm = false;
             if (id == R.id.left_button) {
                 //确认删除消息
@@ -254,16 +256,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         adapter.notifyDataSetChanged();
         updateUnRead();
-        Toast.makeText(this, "已读", Toast.LENGTH_SHORT).show();
     }
 
     /**
      * 删除按钮
      */
     private void deleteMessage() {
-        confirm = true;
+        confirm = true;//进入删除模式
         visibilityLayout.setVisibility(View.VISIBLE);
-
         newsTitleText.setVisibility(View.INVISIBLE);
         newsContentText.setText("确定删除所选（有）信息吗");
         rightButton.setVisibility(View.VISIBLE);
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void editMessage() {
         editMode = !editMode;
         if (editMode) {
-            //编辑
+            //编辑状态
             showEdit(View.VISIBLE);
             refresh.setEnabled(false);
             edit.setText("取消");
@@ -347,6 +347,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (checked) {
             //checkbox为选中状态
             selectedPosition.add(position);
+            Log.d("",String.valueOf(selectedPosition.size()));
             if (!read.isEnabled()) {
                 read.setEnabled(true);
                 delete.setEnabled(true);
@@ -368,7 +369,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        Toast.makeText(this, "" + selectedPosition.size(), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "" + selectedPosition.size(), Toast.LENGTH_SHORT).show();
         if (selectedPosition.size() == 0) {
             all.setText("全选");
             clicked = false;
