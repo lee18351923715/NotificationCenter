@@ -1,13 +1,7 @@
 package com.sample.notificationcenter;
 
-import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.IntentFilter;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -21,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -42,12 +35,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button leftButton;
     private Button rightButton;
 
+    private TextView noMessage;
     private TextView tvUnread;
     private Button all;
     private Button read;
     private Button delete;
     private Button edit;
 
+    //点击了全选
+    private boolean checkAll;
     //编辑模式
     private boolean editMode;
     //对应全选按钮
@@ -68,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initView() {
+        noMessage = findViewById(R.id.no_message);
         visibilityLayout = findViewById(R.id.visibility_layout);
         newsTitleText = findViewById(R.id.news_title);
         newsContentText = findViewById(R.id.news_content);
@@ -94,16 +91,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //增加或减少条目动画效果，不要就注掉
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
-        if(getNews()==null){
+        if(MessageDAO.getNews(this)==null){
             list = new ArrayList<>();
         }else {
-            list = getNews();
+            list = MessageDAO.getNews(this);
         }
         adapter = new MessageAdapter(this, list);
         adapter.setOnItemClickListener(this);
         recyclerView.setAdapter(adapter);
-
-        edit.setEnabled(true);
+        if(MessageDAO.getNews(this).size() == 0){
+            edit.setEnabled(false);
+            setNoMessage();
+        }else {
+            edit.setEnabled(true);
+            setMessage();
+        }
     }
 
     @Override
@@ -140,6 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     @Override
     public void onItemClick(int position) {
+        checkAll = false;
         all.setText("全选");
         clicked = false;
         this.position = position;
@@ -158,6 +161,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             adapter.notifyItemChanged(position, bean.isChecked());
         }
         updateUnRead();
+    }
+
+    //设置无消息时的页面布局
+    public void setNoMessage(){
+        noMessage.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.INVISIBLE);
+    }
+    //设置有消息时的页面布局
+    public void setMessage(){
+        noMessage.setVisibility(View.INVISIBLE);
+        recyclerView.setVisibility(View.VISIBLE);
     }
 
     //更改未读消息数量
@@ -183,8 +197,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     @Override
     public void onChecked(int position) {
-        all.setText("全选");
-        clicked = false;
         this.position = position;
         MessageBean bean = list.get(position);
         setCheckData(bean.isChecked());
@@ -227,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 refresh.setEnabled(true);
                 adapter.editMode = false;
                 updateUnRead();
+                setNoMessage();
             }
 
             visibilityLayout.setVisibility(View.INVISIBLE);
@@ -235,8 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             delete.setEnabled(false);
 
             all.setText("全选");
-            adapter.checkAll = false;
-            adapter.checkNone = true;
+            checkAll = false;
 
             //所有item点击状态设为false
 //            for (MessageBean bean : list) {
@@ -250,14 +262,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * 设为已读按钮
      */
     private void messageRead() {
+        int index = 0;
         //设置选中item的已读状态
         for (int i = 0; i < selectedPosition.size(); i++) {
             MessageBean bean = list.get(selectedPosition.get(i));
+            if(bean.getFlag() == 0){
+                index++;
+            }
             bean.setRead(true);
             bean.setFlag(1);
         }
         adapter.notifyDataSetChanged();
         updateUnRead();
+        Toast.makeText(this,"完成"+index+"条信息已读！",Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -294,8 +311,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             all.setText("全选");
             clicked = false;
-            adapter.checkAll = false;
-            adapter.checkNone = true;
+            checkAll = false;
             for (MessageBean bean : list) {
                 bean.setChecked(false);
             }
@@ -313,25 +329,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (clicked) {
             //全选
             all.setText("取消全选");
-            adapter.checkAll = true;
-            adapter.checkNone = false;
+            checkAll = true;
 
             if (!read.isEnabled()) {
                 read.setEnabled(true);
                 delete.setEnabled(true);
             }
 
-            for (MessageBean bean : list) {
+            for (int i = 0; i < list.size(); i++) {
+                MessageBean bean = list.get(i);
                 bean.setChecked(true);
+                selectedPosition.add(i);
             }
 
         } else {
+            visibilityLayout.setVisibility(View.INVISIBLE);
+            selectedPosition.clear();
+
             read.setEnabled(false);
             delete.setEnabled(false);
             //反选
             all.setText("全选");
-            adapter.checkAll = false;
-            adapter.checkNone = true;
+            checkAll = false;
 
             for (MessageBean bean : list) {
                 bean.setChecked(false);
@@ -346,10 +365,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * @param checked
      */
     private void setCheckData(boolean checked) {
+        if (checkAll) {
+            return;
+        }
+
+        all.setText("全选");
+        clicked = false;
+
         if (checked) {
             //checkbox为选中状态
             selectedPosition.add(position);
-            Log.d("",String.valueOf(selectedPosition.size()));
             if (!read.isEnabled()) {
                 read.setEnabled(true);
                 delete.setEnabled(true);
@@ -371,7 +396,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        //Toast.makeText(this, "" + selectedPosition.size(), Toast.LENGTH_SHORT).show();
         if (selectedPosition.size() == 0) {
             all.setText("全选");
             clicked = false;
@@ -380,6 +404,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             clicked = true;
         }
     }
+
 
     /**
      * 点击编辑后显示各个功能按钮
@@ -470,46 +495,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * 手动添加数据
      */
     private void setData() {
-        int type = (int) (Math.random() * 10 + 1);
-        switch (type) {
-            case 1:
-                list.add(0, new MessageBean("行程评分",
-                        "本次行驶距离：xx公里；油耗：xx;急加速：xx次；急减速：xx次，急转弯：xx次。建议减速慢行，平稳行驶，可减少油耗，降低安全风险，祝您用车愉快！", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 2));
-                break;
-            case 2:
-                list.add(0, new MessageBean("车辆保养提醒",
-                        "尊敬的用户，累计行驶公里数，达到保养里程，请联系上汽大通官方4S店预约保养，谢谢。", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 3));
-                break;
-            case 3:
-                list.add(0, new MessageBean("保养预约到期提醒",
-                        "尊敬的用户，您的爱车，在年月日时间有一次维保服务预约。预约门店地址：xxx，联系电话xxx。", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 4));
-                break;
-            case 4:
-                list.add(0, new MessageBean("车检提醒", "您的【车辆昵称】还有xx天要进行车检，请于x年x月x日前去完成车检，谢谢。", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 6));
-                break;
-            case 5:
-                list.add(0, new MessageBean("目的地推送", "您收到来自xxx发送的目的地：上海市杨浦区军工路2500号。", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 5));
-                break;
-            case 6:
-                list.add(0, new MessageBean("行程提醒", "15分钟后开车去公司。", "2019-01-01", 0, 5));
-                break;
-            case 7:
-                list.add(0, new MessageBean("低油量提醒", "前油量偏低，点击前往附近加油站加油，保证车辆正常行驶", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 5));
-                break;
-            case 8:
-                list.add(0, new MessageBean("可续里程不足", "您的车辆可续里程不足以到达目的地，请前往最近加油站加油。", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 5));
-                break;
-            case 9:
-                list.add(0, new MessageBean("天气提醒", "明天有雨，请记得带伞。", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 2));
-                break;
-            case 10:
-                list.add(0, new MessageBean("促销活动", "运营商提供的活动消息体", new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date()).toString(), 0, 4));
-                break;
-        }
-
+        list.add(0, MessageDAO.getMessage());
         if (adapter != null) {
             if (list.size() == 1) {
                 edit.setEnabled(true);
+                setMessage();
             }
 //            int lastPosition = list.size() - 1;
             //刷新列表数据
@@ -523,63 +513,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    /**
-     * 从数据库中初始化模拟新闻数据
-     * 将数据库的信息按倒序方式输出
-     */
-    private List<MessageBean> getNews() {
-        List<MessageBean> mNewsList = new ArrayList<>();
-        Cursor cursor = this.getContentResolver().query(MetaData.TableMetaData.CONTENT_URI, new String[]{"id", MetaData.TableMetaData.FIELD_TITLE, MetaData.TableMetaData.FIELD_MESSAGE,
-                MetaData.TableMetaData.FIELD_FLAG, MetaData.TableMetaData.FIELD_TIME, MetaData.TableMetaData.FIELD_TYPE}, null, null, null);
-        if (cursor == null) {
-            Toast.makeText(this, "当前没有数据", Toast.LENGTH_SHORT).show();
-            return null;
-        }
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(cursor.getColumnIndex("id"));
-            String title = cursor.getString(cursor.getColumnIndex("title"));
-            String message = cursor.getString(cursor.getColumnIndex("message"));
-            int flag = cursor.getInt(cursor.getColumnIndex("flag"));
-            String time = cursor.getString(cursor.getColumnIndex("time"));
-            int type = cursor.getInt(cursor.getColumnIndex("type"));
-            MessageBean news = new MessageBean(id,title,message,time,flag,type);
-            mNewsList.add(news);
-        }
-        cursor.close();
-        return mNewsList;
-    }
-
-    public void delete(MessageBean messageBean){
-        Uri uri = Uri.parse(MetaData.TableMetaData.CONTENT_URI.toString() + "/" +messageBean.getId());
-        ContentResolver cr = getContentResolver();
-        cr.delete(uri, null, null);
-    }
-
-    public void saveMessage(MessageBean messageBean){
-        ContentValues values1 = new ContentValues();
-        values1.put("title", messageBean.getTitle());
-        values1.put("message", messageBean.getMessage());
-        if(messageBean.getFlag() == 1){
-            values1.put("flag", 1);
-        }else {
-            values1.put("flag", 0);
-        }
-        values1.put("time", messageBean.getTime());
-        values1.put("type", messageBean.getType());
-        getContentResolver().insert(MetaData.TableMetaData.CONTENT_URI, values1);
-    }
-
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if(getNews()!= null){
-                for(MessageBean messageBean : getNews()){
-                    delete(messageBean);
+            if(MessageDAO.getNews(this)!= null){
+                for(MessageBean messageBean : MessageDAO.getNews(this)){
+                    MessageDAO.delete(this,messageBean);
                 }
             }
             if(list != null){
                 for (MessageBean messageBean : list) {
-                    saveMessage(messageBean);
+                    MessageDAO.saveMessage(this, messageBean);
                 }
             }
             list.clear();
@@ -589,8 +533,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return super.onKeyDown(keyCode, event);
         }
     }
-
-
-    //开机广播
 
 }

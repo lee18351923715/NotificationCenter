@@ -22,10 +22,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     //是否是编辑状态
     public boolean editMode;
-    //点击了全选
-    public boolean checkAll;
-    //点击了取消全选
-    public boolean checkNone;
 
     public MessageAdapter(Context context, List<MessageBean> list) {
         this.context = context;
@@ -42,8 +38,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             @Override
             public void onClick(View view) {
                 if (itemClickListener != null) {
-                    checkAll = false;
-                    checkNone = false;
+//                    checkAll = false;
+//                    checkNone = false;
                     itemClickListener.onItemClick(holder.getLayoutPosition());
                 }
             }
@@ -84,20 +80,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             holder.checkBox.setVisibility(View.INVISIBLE);
         }
 
-        if (bean.isChecked()) {
-            holder.checkBox.setChecked(true);
-        } else {
-            holder.checkBox.setChecked(false);
-        }
-
-        if (checkAll) {
-            holder.checkBox.setChecked(true);
-        }
-
-        if (checkNone) {
-            holder.checkBox.setChecked(false);
-        }
-
+        holder.checkBox.setChecked(bean.isChecked());
     }
 
     @Override
