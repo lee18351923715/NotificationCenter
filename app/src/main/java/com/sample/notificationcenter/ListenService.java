@@ -23,10 +23,10 @@ public class ListenService extends Service {
     @Override
     public void onCreate() {
         Toast.makeText(this,"Service已经启动了",Toast.LENGTH_SHORT).show();
+        //动态注册广播接收器，拦截"adb.addmessage"的广播
         adbReceiver = new ADBReceiver();
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(Intent.ACTION_SCREEN_ON);
+        filter.addAction(ADB_ACTION);
         registerReceiver(adbReceiver,filter);
     }
 

@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
-        MessageAdapter.OnItemClickListener {
+        MessageAdapter.OnItemClickListener, ADBReceiver.BoardcastListener {
 
     private RecyclerView recyclerView;//
 
@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         adapter = new MessageAdapter(this, list);
         adapter.setOnItemClickListener(this);
+        receiver.setBoardcastListensr(this);
         recyclerView.setAdapter(adapter);
         if(MessageDAO.getNews(this).size() == 0){
             edit.setEnabled(false);
@@ -534,4 +535,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private ADBReceiver receiver = new ADBReceiver(this);
+
+    @Override
+    public void insertMessage() {
+        setData();
+    }
 }
