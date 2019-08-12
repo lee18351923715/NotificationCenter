@@ -106,7 +106,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="40">
-            <androidx.recyclerview.widget.RecyclerView
+            <com.sample.notificationcenter.SlideRecyclerView
                 android:id="@+id/message_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

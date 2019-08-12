@@ -21,7 +21,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
         MessageAdapter.OnItemClickListener, ADBReceiver.BoardcastListener {
 
-    private RecyclerView recyclerView;//
+    private SlideRecyclerView recyclerView;//
 
     private List<MessageBean> list;//数据源
     private MessageAdapter adapter;
@@ -201,6 +201,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         this.position = position;
         MessageBean bean = list.get(position);
         setCheckData(bean.isChecked());
+    }
+
+    @Override
+    public void onDelete(int position) {
+        this.position = position;
+        list.remove(position);
+        updateUnRead();
+        adapter.notifyDataSetChanged();
     }
 
     /**
@@ -535,7 +543,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private ADBReceiver receiver = new ADBReceiver(this);
+    private ADBReceiver receiver = new ADBReceiver();
 
     @Override
     public void insertMessage() {

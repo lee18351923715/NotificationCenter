@@ -57,6 +57,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             }
         });
 
+        holder.tv_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (itemClickListener != null) {
+                    int position = holder.getLayoutPosition();
+                    itemClickListener.onDelete(position);
+                }
+            }
+        });
+
         return holder;
     }
 
@@ -91,6 +101,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     public interface OnItemClickListener {
         void onItemClick(int position);
         void onChecked(int position);
+        void onDelete(int position);
     }
 
     public void setOnItemClickListener(OnItemClickListener itemClickListener) {
@@ -103,6 +114,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         TextView title;
         TextView time;
         TextView content;
+        TextView tv_delete;
 
         public MessageViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -111,6 +123,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             title = itemView.findViewById(R.id.title);
             time = itemView.findViewById(R.id.time);
             content = itemView.findViewById(R.id.content);
+            tv_delete = itemView.findViewById(R.id.tv_delete);
         }
     }
 }
