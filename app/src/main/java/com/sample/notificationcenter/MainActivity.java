@@ -91,19 +91,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //增加或减少条目动画效果，不要就注掉
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
-        if(MessageDAO.getNews(this)==null){
+        if (MessageDAO.getNews(this) == null) {
             list = new ArrayList<>();
-        }else {
+        } else {
             list = MessageDAO.getNews(this);
         }
         adapter = new MessageAdapter(this, list);
         adapter.setOnItemClickListener(this);
         receiver.setBoardcastListensr(this);
         recyclerView.setAdapter(adapter);
-        if(MessageDAO.getNews(this).size() == 0){
+        if (MessageDAO.getNews(this).size() == 0) {
             edit.setEnabled(false);
             setNoMessage();
-        }else {
+        } else {
             edit.setEnabled(true);
             setMessage();
         }
@@ -165,12 +165,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //设置无消息时的页面布局
-    public void setNoMessage(){
+    public void setNoMessage() {
         noMessage.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.INVISIBLE);
     }
+
     //设置有消息时的页面布局
-    public void setMessage(){
+    public void setMessage() {
         noMessage.setVisibility(View.INVISIBLE);
         recyclerView.setVisibility(View.VISIBLE);
     }
@@ -180,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         unread = 0;
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).getFlag() == 0) {
-                unread ++;
+                unread++;
             }
         }
         if (unread == 0) {
@@ -204,11 +205,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onDelete(int position) {
-        this.position = position;
-        list.remove(position);
-        updateUnRead();
-        adapter.notifyDataSetChanged();
+    public void onDelete(final int position) {
+        deleteMessage();
+        leftButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                list.remove(position);
+                visibilityLayout.setVisibility(View.INVISIBLE);
+                updateUnRead();
+                adapter.notifyDataSetChanged();
+                recyclerView.closeMenu();
+            }
+        });
+        rightButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                visibilityLayout.setVisibility(View.INVISIBLE);
+                recyclerView.closeMenu();
+            }
+        });
+
     }
 
     /**
@@ -275,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //设置选中item的已读状态
         for (int i = 0; i < selectedPosition.size(); i++) {
             MessageBean bean = list.get(selectedPosition.get(i));
-            if(bean.getFlag() == 0){
+            if (bean.getFlag() == 0) {
                 index++;
             }
             bean.setRead(true);
@@ -283,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         adapter.notifyDataSetChanged();
         updateUnRead();
-        Toast.makeText(this,"完成"+index+"条信息已读！",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "完成" + index + "条信息已读！", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -525,12 +541,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if(MessageDAO.getNews(this)!= null){
-                for(MessageBean messageBean : MessageDAO.getNews(this)){
-                    MessageDAO.delete(this,messageBean);
+            if (MessageDAO.getNews(this) != null) {
+                for (MessageBean messageBean : MessageDAO.getNews(this)) {
+                    MessageDAO.delete(this, messageBean);
                 }
             }
-            if(list != null){
+            if (list != null) {
                 for (MessageBean messageBean : list) {
                     MessageDAO.saveMessage(this, messageBean);
                 }
@@ -538,7 +554,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             list.clear();
             finish();
             return true;
-        }else {
+        } else {
             return super.onKeyDown(keyCode, event);
         }
     }
